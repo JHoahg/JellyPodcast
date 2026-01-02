@@ -1,0 +1,17 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+.vscode/
+.idea/
+
+# Internal development notes (not for public repo)
+INTERNAL.md
+deploy.sh
+DEPLOYMENT.md
+RELEASE_NOTES_*.md
+
+# macOS
+.DS_Store

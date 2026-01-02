@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Podcast Plugin Configuration</title>
+</head>
+<body>
+    <div id="PodcastConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="PodcastConfigForm">
+                    <div class="verticalSection">
+                        <h2>General Settings</h2>
+
+                        <div class="inputContainer">
+                            <label for="libraryPath">Library Path:</label>
+                            <input id="libraryPath" name="libraryPath" type="text" is="emby-input" />
+                            <div class="fieldDescription">Path where podcast .strm files will be created (default: /config/data/podcasts)</div>
+                        </div>
+
+                        <div class="selectContainer">
+                            <label for="preferredQuality">Preferred Quality:</label>
+                            <select id="preferredQuality" name="preferredQuality" is="emby-select">
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                            <div class="fieldDescription">Preferred audio quality when multiple options are available</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="downloadThumbnails" name="downloadThumbnails" type="checkbox" is="emby-checkbox" />
+                                <span>Download Thumbnails</span>
+                            </label>
+                            <div class="fieldDescription">Download cover art and episode thumbnails</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label for="maxEpisodesPerPodcast">Max Episodes Per Podcast:</label>
+                            <input id="maxEpisodesPerPodcast" name="maxEpisodesPerPodcast" type="number" is="emby-input" min="1" max="1000" />
+                            <div class="fieldDescription">Maximum number of episodes to keep per podcast (default: 50)</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2>Web Player Compatibility</h2>
+
+                        <div class="selectContainer">
+                            <label for="webPlayerCompatibilityMode">Compatibility Mode:</label>
+                            <select id="webPlayerCompatibilityMode" name="webPlayerCompatibilityMode" is="emby-select">
+                                <option value="auto">Auto (Recommended)</option>
+                                <option value="alwaysOn">Always Enable</option>
+                                <option value="alwaysOff">Always Disable</option>
+                            </select>
+                            <div class="fieldDescription">
+                                <strong>Auto:</strong> Wraps audio in video for smooth web player playback. Works for all clients.<br/>
+                                <strong>Always Enable:</strong> Forces video wrapping for all audio podcasts (uses server CPU).<br/>
+                                <strong>Always Disable:</strong> Direct audio URLs only (web player may not work, mobile/desktop native playback).<br/>
+                                <br/>
+                                <strong>⚠️ Important:</strong> After changing this setting, you must:
+                                <ol style="margin: 0.5em 0;">
+                                    <li>Run "Clean Up All Episodes" button below</li>
+                                    <li>Run "Refresh Podcast Library" from Scheduled Tasks</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2>Auto Cleanup</h2>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="enableAutoCleanup" name="enableAutoCleanup" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Auto Cleanup</span>
+                            </label>
+                            <div class="fieldDescription">Automatically delete old episodes</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label for="daysToKeepEpisodes">Days to Keep Episodes:</label>
+                            <input id="daysToKeepEpisodes" name="daysToKeepEpisodes" type="number" is="emby-input" min="1" max="365" />
+                            <div class="fieldDescription">Number of days to keep episodes before cleanup (default: 30)</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2>Maintenance</h2>
+                        <button type="button" id="cleanupButton" is="emby-button" class="raised delete block" style="margin-top: 1em;">
+                            <span>Clean Up All Episodes</span>
+                        </button>
+                        <div class="fieldDescription" style="margin-top: 0.5em;">
+                            Removes all episode files (.strm, .nfo, .audiourl, thumbnails) while keeping podcast metadata.
+                            <br/><strong>Warning:</strong> This action cannot be undone. Run "Refresh Podcast Library" after cleanup to recreate episodes.
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h2>Podcast Feeds</h2>
+                        <div class="fieldDescription">Add podcast RSS/Atom feed URLs below</div>
+
+                        <div id="podcastFeedsContainer" style="margin-top: 1em;">
+                            <!-- Podcast feeds will be dynamically added here -->
+                        </div>
+
+                        <button type="button" id="addFeedButton" is="emby-button" class="raised button-submit block" style="margin-top: 1em;">
+                            <span>Add Podcast Feed</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <button type="submit" is="emby-button" class="raised button-submit block">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var PodcastConfig = {
+                pluginUniqueId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+            };
+
+            document.getElementById('PodcastConfigPage').addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(PodcastConfig.pluginUniqueId).then(function (config) {
+                    document.getElementById('libraryPath').value = config.LibraryPath || '/config/data/podcasts';
+                    document.getElementById('preferredQuality').value = config.PreferredQuality || 'high';
+                    document.getElementById('downloadThumbnails').checked = config.DownloadThumbnails !== false;
+                    document.getElementById('maxEpisodesPerPodcast').value = config.MaxEpisodesPerPodcast || 50;
+                    document.getElementById('webPlayerCompatibilityMode').value = config.WebPlayerCompatibilityMode || 'auto';
+                    document.getElementById('enableAutoCleanup').checked = config.EnableAutoCleanup || false;
+                    document.getElementById('daysToKeepEpisodes').value = config.DaysToKeepEpisodes || 30;
+
+                    // Load podcast feeds
+                    PodcastConfig.loadFeeds(config.PodcastFeeds || []);
+
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+            document.getElementById('PodcastConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+
+                ApiClient.getPluginConfiguration(PodcastConfig.pluginUniqueId).then(function (config) {
+                    config.LibraryPath = document.getElementById('libraryPath').value;
+                    config.PreferredQuality = document.getElementById('preferredQuality').value;
+                    config.DownloadThumbnails = document.getElementById('downloadThumbnails').checked;
+                    config.MaxEpisodesPerPodcast = parseInt(document.getElementById('maxEpisodesPerPodcast').value) || 50;
+                    config.WebPlayerCompatibilityMode = document.getElementById('webPlayerCompatibilityMode').value;
+                    config.EnableAutoCleanup = document.getElementById('enableAutoCleanup').checked;
+                    config.DaysToKeepEpisodes = parseInt(document.getElementById('daysToKeepEpisodes').value) || 30;
+
+                    // Collect podcast feeds
+                    config.PodcastFeeds = PodcastConfig.collectFeeds();
+
+                    ApiClient.updatePluginConfiguration(PodcastConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+
+                return false;
+            });
+
+            document.getElementById('addFeedButton').addEventListener('click', function () {
+                PodcastConfig.addFeedRow({ Id: PodcastConfig.generateId(), Url: '', CustomName: '', Enabled: true });
+            });
+
+            document.getElementById('cleanupButton').addEventListener('click', function () {
+                if (confirm('Are you sure you want to clean up all episodes? This will delete all .strm, .nfo, .audiourl files and thumbnails.\n\nPodcast metadata (tvshow.nfo, folder.jpg) will be kept.\n\nYou will need to run "Refresh Podcast Library" to recreate episodes.')) {
+                    Dashboard.showLoadingMsg();
+
+                    // Call the cleanup API endpoint using Jellyfin's API client
+                    var url = ApiClient.getUrl('/Podcast/Cleanup');
+
+                    ApiClient.fetch({
+                        url: url,
+                        type: 'POST',
+                        dataType: 'json'
+                    }).then(function (response) {
+                        Dashboard.hideLoadingMsg();
+                        Dashboard.alert('Episode cleanup completed successfully. Deleted ' + (response.FilesDeleted || 0) + ' files.\n\nRun "Refresh Podcast Library" to recreate episodes.');
+                    }).catch(function (error) {
+                        Dashboard.hideLoadingMsg();
+                        Dashboard.alert('Cleanup failed: ' + (error.message || 'Unknown error'));
+                    });
+                }
+            });
+
+            PodcastConfig.generateId = function () {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            };
+
+            PodcastConfig.loadFeeds = function (feeds) {
+                var container = document.getElementById('podcastFeedsContainer');
+                container.innerHTML = '';
+
+                if (feeds.length === 0) {
+                    // Add one empty feed by default
+                    PodcastConfig.addFeedRow({ Id: PodcastConfig.generateId(), Url: '', CustomName: '', Enabled: true });
+                } else {
+                    feeds.forEach(function (feed) {
+                        PodcastConfig.addFeedRow(feed);
+                    });
+                }
+            };
+
+            PodcastConfig.addFeedRow = function (feed) {
+                var container = document.getElementById('podcastFeedsContainer');
+                var feedDiv = document.createElement('div');
+                feedDiv.className = 'podcastFeedRow';
+                feedDiv.style.cssText = 'border: 1px solid #444; padding: 1em; margin-bottom: 1em; border-radius: 4px;';
+                feedDiv.setAttribute('data-feed-id', feed.Id);
+
+                // Create checkbox container
+                var checkboxContainer = document.createElement('div');
+                checkboxContainer.className = 'checkboxContainer';
+                var checkboxLabel = document.createElement('label');
+                var checkboxInput = document.createElement('input');
+                checkboxInput.type = 'checkbox';
+                checkboxInput.className = 'feedEnabled';
+                checkboxInput.setAttribute('is', 'emby-checkbox');
+                checkboxInput.checked = feed.Enabled;
+                var checkboxSpan = document.createElement('span');
+                checkboxSpan.textContent = 'Enabled';
+                checkboxLabel.appendChild(checkboxInput);
+                checkboxLabel.appendChild(checkboxSpan);
+                checkboxContainer.appendChild(checkboxLabel);
+
+                // Create URL input container
+                var urlContainer = document.createElement('div');
+                urlContainer.className = 'inputContainer';
+                var urlLabel = document.createElement('label');
+                urlLabel.textContent = 'Feed URL:';
+                var urlInput = document.createElement('input');
+                urlInput.type = 'text';
+                urlInput.className = 'feedUrl';
+                urlInput.setAttribute('is', 'emby-input');
+                urlInput.value = feed.Url || '';
+                urlInput.placeholder = 'https://example.com/podcast/feed.xml';
+                urlContainer.appendChild(urlLabel);
+                urlContainer.appendChild(urlInput);
+
+                // Create custom name input container
+                var nameContainer = document.createElement('div');
+                nameContainer.className = 'inputContainer';
+                var nameLabel = document.createElement('label');
+                nameLabel.textContent = 'Custom Name (optional):';
+                var nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'feedCustomName';
+                nameInput.setAttribute('is', 'emby-input');
+                nameInput.value = feed.CustomName || '';
+                nameInput.placeholder = 'Leave empty to use feed title';
+                nameContainer.appendChild(nameLabel);
+                nameContainer.appendChild(nameInput);
+
+                // Create remove button
+                var removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'removeFeedButton';
+                removeButton.setAttribute('is', 'emby-button');
+                removeButton.setAttribute('class', 'raised block');
+                removeButton.style.backgroundColor = '#c00';
+                var removeSpan = document.createElement('span');
+                removeSpan.textContent = 'Remove Feed';
+                removeButton.appendChild(removeSpan);
+
+                removeButton.addEventListener('click', function () {
+                    feedDiv.remove();
+                });
+
+                // Append all elements
+                feedDiv.appendChild(checkboxContainer);
+                feedDiv.appendChild(urlContainer);
+                feedDiv.appendChild(nameContainer);
+                feedDiv.appendChild(removeButton);
+
+                container.appendChild(feedDiv);
+            };
+
+            PodcastConfig.collectFeeds = function () {
+                var feeds = [];
+                var feedRows = document.querySelectorAll('.podcastFeedRow');
+
+                feedRows.forEach(function (row) {
+                    var url = row.querySelector('.feedUrl').value.trim();
+                    if (url) {
+                        feeds.push({
+                            Id: row.getAttribute('data-feed-id'),
+                            Url: url,
+                            CustomName: row.querySelector('.feedCustomName').value.trim(),
+                            Enabled: row.querySelector('.feedEnabled').checked
+                        });
+                    }
+                });
+
+                return feeds;
+            };
+        </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+---
+version: "1.0.0"
+name: "Podcast"
+guid: "677e8667-ef05-4d2a-88d0-3a920951ca8d"
+targetAbi: "10.11.0.0"
+owner: "JHoahg"
+description: "Universal podcast support for Jellyfin via RSS/Atom feeds with automatic web player compatibility"
+overview: "Add any podcast to Jellyfin using RSS or Atom feeds. Automatically organizes podcasts as TV series with proper episode metadata. Features web player compatibility mode for smooth audio playback, Apple Podcasts URL support, and automatic episode refresh."
+category: "Metadata"
+changelog: |
+  ## 1.0.0
+  - Initial release
+  - RSS 2.0 and Atom feed support with iTunes extensions
+  - Apple Podcasts URL auto-resolution to RSS feeds
+  - Automatic episode refresh every 2 hours
+  - Web player compatibility mode (Auto/Always On/Always Off)
+  - Audio wrapping in WebM video for web player support
+  - Season 1 folder organization for proper TV show recognition
+  - Thumbnail downloads with episode-specific images
+  - NFO metadata generation with season/episode tags
+  - Auto-cleanup of old episodes with configurable retention
+  - Configurable episode limits per podcast
+  - Manual cleanup button for episode management
+  - Support for both audio and video podcasts
